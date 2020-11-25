@@ -3,8 +3,7 @@
 # $1 -> Contains project name.
 # $2 -> Contains environment to put in .gitignore  
 
-
-echo "------- CREATED BY DANIEL DIAZ 2020  --------"
+# "------- CREATED BY DANIEL DIAZ 2020  --------"
 
 read -p "Your username >>> " user
 read -p "Name of the new project >>> " repo
