@@ -1,9 +1,14 @@
 #!/bin/bash
 
-# $1 -> Contains project name.
-# $2 -> Contains environment to put in .gitignore  
+### GITHUB AUTOMATION BY DANIEL DIAZ ###
+#
+#  ____   ____
+# |  _ \ |  _ \   Copyright (c) 2020 Daniel Diaz
+# | | | || | | |
+# | |_| || |_| |  http://www.github.com/Daniel1404/Github_automation
+# |____/ |____/
+#
 
-# "------- CREATED BY DANIEL DIAZ 2020  --------"
 
 read -p "Your username >>> " user
 read -p "Name of the new project >>> " repo
