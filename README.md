@@ -21,7 +21,7 @@ You are saving a lot of time by using a github automation tool. You are skipping
 * Python3
 * Vscodium or Vscode
 
-Consider to install [Vscodium](https://vscodium.com/) instead of Vscode. Vscodium is the open-source binary of Vscode.
+Consider to install [Vscodium](https://vscodium.com/) instead of Vscode, since Vscodium is the open-source binary of Vscode.
 
 Also you need a **github access token**. You can find it by **Going to your Settings > Developer settings > Personal access tokens > Generate access tokens**.
 
@@ -70,6 +70,9 @@ create
 This will call the **[create.sh](https://github.com/Daniel1404/Github-automation/blob/main/create.sh)** file.
 
 You will see a prompt where you have to type your name (To include it in the License), your github username and the name of the repo you want to create.
+
+## Screenshot
+![Creating a repo](.screenshots/create.png "Creating a repo")
 
 That's all.
 
