@@ -31,6 +31,7 @@ echo "Copying to $installation_folder"
 rm -rf $installation_folder
 mkdir $installation_folder
 cp -rf ./* $installation_folder
+# shellcheck disable=SC2164
 cd $installation_folder
 
 echo " "
@@ -49,9 +50,9 @@ echo " "
 # This removes and create again the links to avoid duplicates
 rm -rf ${executable_folder}create ${executable_folder}create_py
 
-ln -s $PWD/create.sh  ${executable_folder}create
-ln -s $PWD/create.py ${executable_folder}create_py
+ln -s $PWD/create.py ${executable_folder}create
 
+# shellcheck disable=SC2164
 cd $PD
 
 echo "Installation has finished"
