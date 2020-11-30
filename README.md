@@ -67,9 +67,9 @@ Now type create in your terminal.
 create
 ```
 
-This will call the **[create.sh](https://github.com/Daniel1404/Github-automation/blob/main/create.sh)** file.
+This will call the **[create.py](https://github.com/Daniel1404/Github-automation/blob/main/create.py)** file.
 
-You will see a prompt where you have to type your name (To include it in the License), your github username and the name of the repo you want to create.
+You will see a prompt where you have to type your name (To include it in the MIT License), your github username and the name of the repo you want to create.
 
 ## Screenshot
 ![Creating a repo](.screenshots/create.png "Creating a repo")
@@ -82,5 +82,4 @@ That's all.
 * Find a more secure way to use the token
 * Make it usable in Windows.
 * Implement a text editor choice in installation process.
-
 

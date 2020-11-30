@@ -26,6 +26,7 @@ class OsOperations:
         :return: Make the Git operations, I prefer to use ssh instead  of Http
         """
         remote = f"git remote add origin git@github.com:{self.user}/{self.repo_name}.git"
+        # Comment above, and uncomment below to use https instead of ssh.
         # remote = f"git remote add origin https://github.com/{self.user}/{self.repo_name}.git"
 
         os.system("git init .")
@@ -37,35 +38,40 @@ class OsOperations:
 
     def create_files(self):
         mit_license = """        
-        MIT License
+                   MIT License
 
-        Copyright (c) 2020 [year] [full_name] 
+            Copyright (c) [year] [fullname]
 
-        Permission is hereby granted, free of charge, to any person obtaining a copy
-        of this software and associated documentation files (the "Software"), to deal
-        in the Software without restriction, including without limitation the rights
-        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-        copies of the Software, and to permit persons to whom the Software is
-        furnished to do so, subject to the following conditions:
+            Permission is hereby granted, free of charge, to any person obtaining a copy
+            of this software and associated documentation files (the "Software"), to deal
+            in the Software without restriction, including without limitation the rights
+            to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+            copies of the Software, and to permit persons to whom the Software is
+            furnished to do so, subject to the following conditions:
 
-        The above copyright notice and this permission notice shall be included in all
-        copies or substantial portions of the Software.
+            The above copyright notice and this permission notice shall be included in all
+            copies or substantial portions of the Software.
 
-        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+            THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+            IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+            FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+            AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+            LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+            OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+            SOFTWARE.
         """
-        mit_license.replace("[year]", get_year())
-        mit_license.replace("[full_name]", self.name)
+        mit_license = mit_license.replace("[year]", get_year())
+        mit_license = mit_license.replace("[fullname]", self.name)
 
         with open("README.md", "w+") as readme:
             readme.write(f"# {self.repo_name}")
 
         with open("LICENSE", "w+") as my_license:
             my_license.write(mit_license)
+
+        # Requires the program to be installed
+        path_to_ignore = f"cp {home}/.local/share/Github_automation/Templates/python.gitignore ./.gitignore"
+        os.system(path_to_ignore)
 
 
 # Function that returns the token
@@ -94,63 +100,81 @@ def get_year():
     return str(year.tm_year)
 
 
-print("------- GITHUB AUTOMATION -------")
+def create_repo(username, token, repository_name):
+    """
+    Create the repository
+    :return: Create the repository
+    """
+    payload = {'name': repository_name}
+    login = requests.post('https://api.github.com/' + 'user/repos',
+                          auth=(username, token), data=json.dumps(payload))
+    print("Response from the server : " + str(login.status_code))
+    print(" ")
+    # Check if the repo has been created
+    if str(login.status_code).startswith("2"):
+        print("------ Repository Created -------")
+        print("")
+        print("")
+    else:
+        print("------ Error creating the Repository -------")
+        sys.exit()
 
-print("")
 
-print("Your name is required to write the License File")
+def launch_editor(editor):
+    return os.system(f"{editor} .")
 
-name = input("Your name >>> ")
 
-user = input("Your github username >>> ")
-print("")
+def main(name, user, repository, editor, token):
+    """
 
-print("Make sure that the project name is valid!")
+    :param name: Name of the user
+    :param user: Github username of the user
+    :param repository: Name of the repository that wants to be created
+    :param editor: Prefered editor
+    :param token: The github auth token
+    :return:
+    """
+    project = OsOperations(name, user, repository)
+    create_repo(user, token, repository)
+    project.make_directory()
+    project.create_files()
+    project.make_git_operations()
+    launch_editor(editor)
 
-repo_name = input("The name of your repository >>> ")
-repository = repo_name.replace(" ", "-")
 
-# print("""
-# [1] GNU license
-# [2] MIT license
-# [3] Apache license
-# """)
-
-# license_type = input("License type >>> [1, 2, 3]")
-print("")
-
-# Defines the home directory
-
+# Variables
 home = os.path.expanduser("~")
 
-user_token = authentication(f"{home}/Auth/githubapi.txt")
-
-payload = {'name': repository}
-
-
-# The most important line 
-login = requests.post('https://api.github.com/' + 'user/repos',
-                      auth=(user, user_token), data=json.dumps(payload))
-
-print("Response from the server : " + str(login.status_code))
-print(" ")
-
-
-# Check if the repo has been created
-if str(login.status_code).startswith("2"):
-    print("------ Repository Created -------")
+if __name__ == "__main__":
+    user_editor = "code"
+    print("------- GITHUB AUTOMATION -------")
     print("")
+    print("Your name is required to write the License File")
+
+    user_name = input("Your name >>> ")
+
+    user_username = input("Your github username >>> ")
+
     print("")
-else:
-    print("------ Error creating the Repository -------")
-    sys.exit()
+    print("Make sure that the project name is valid!")
 
-project = OsOperations(name, user, repository)
+    user_repository = input("The name of your repository >>> ").replace(" ", "-")
 
-pd = os.getcwd()
+    # print("""
+    # [0] GNU license
+    # [1] MIT license
+    # [2] Apache license
+    # """)
 
-print(f"Starting repository in  >>> {pd}")
+    # license_type = input("License type >>> [0, 2, 3]")
+    print("")
 
-project.make_directory()
-project.create_files()
-project.make_git_operations()
+    # Defines the home directory
+
+    user_token = authentication(f"{home}/Auth/githubapi.txt")
+
+    pd = os.getcwd() + "/" + user_repository
+
+    print(f"Starting repository in  >>> {pd}")
+
+    main(user_name, user_username, user_repository, user_editor, user_token)
