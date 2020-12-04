@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+import shutil
 import sys
 import requests
 import json
@@ -23,11 +24,16 @@ class OsOperations:
 
     def make_git_operations(self):
         """
-        :return: Make the Git operations, I prefer to use ssh instead  of Http
+        :return: Make the Git operations, The default remote type is ssh but it can be changed
+        if the user type http in command line
         """
-        remote = f"git remote add origin git@github.com:{self.user}/{self.repo_name}.git"
-        # Comment above, and uncomment below to use https instead of ssh.
-        # remote = f"git remote add origin https://github.com/{self.user}/{self.repo_name}.git"
+        remote_type = GetArguments.get_remote_type()
+
+        # Set the type of remote
+        if remote_type == "ssh":
+            remote = f"git remote add origin git@github.com:{self.user}/{self.repo_name}.git"
+        else:
+            remote = f"git remote add origin https://github.com/{self.user}/{self.repo_name}.git"
 
         os.system("git init .")
         os.system("git add .")
@@ -72,6 +78,60 @@ class OsOperations:
         # Requires the program to be installed
         path_to_ignore = f"cp {home}/.local/share/Github_automation/Templates/python.gitignore ./.gitignore"
         os.system(path_to_ignore)
+
+
+class GetArguments:
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def get_remote_type():
+        remote_type = "ssh"
+        try:
+            first = sys.argv[1]
+            if "http" in first or "HTTP" in first:
+                remote_type = "https"
+        except IndexError:
+            pass
+
+        try:
+            second = sys.argv[2]
+            if "http" in second or "HTTP" in second:
+                remote_type = "https"
+        except IndexError:
+            pass
+
+        return remote_type
+
+    @staticmethod
+    def get_editor():
+        editor = shutil.which(os.environ.get('EDITOR'))
+        try:
+            first = sys.argv[1]
+            if "http" not in first and "HTTP" not in first:
+                argument_editor = shutil.which(first)
+                if argument_editor is not None:
+                    editor = argument_editor
+                else:
+                    print(f"{argument_editor} is not a valid editor")
+                    print(f"Default editor: {editor} will be used")
+        except IndexError:
+            pass
+
+        try:
+            second = sys.argv[2]
+            if "http" not in second and "HTTP" not in second:
+                argument_editor = shutil.which(second)
+                if argument_editor is not None:
+                    editor = argument_editor
+                else:
+                    print(f"{argument_editor} is not a valid editor")
+                    print(f"Default editor: {editor} will be used")
+        except IndexError:
+            pass
+
+        return editor
 
 
 # Function that returns the token
@@ -146,7 +206,7 @@ def main(name, user, repository, editor, token):
 home = os.path.expanduser("~")
 
 if __name__ == "__main__":
-    user_editor = "code"
+    user_editor = GetArguments.get_editor()
     print("------- GITHUB AUTOMATION -------")
     print("")
     print("Your name is required to write the License File")
@@ -169,12 +229,16 @@ if __name__ == "__main__":
     # license_type = input("License type >>> [0, 2, 3]")
     print("")
 
-    # Defines the home directory
+    # Defines the Github token
 
     user_token = authentication(f"{home}/Auth/githubapi.txt")
 
     pd = os.getcwd() + "/" + user_repository
 
-    print(f"Starting repository in  >>> {pd}")
+    if shutil.which("git") is not None:
+        print(f"Starting repository in  >>> {pd}")
 
-    main(user_name, user_username, user_repository, user_editor, user_token)
+        main(user_name, user_username, user_repository, user_editor, user_token)
+    else:
+        print("You don't have git installed in your system, install it to create the project")
+        sys.exit()
