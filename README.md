@@ -19,9 +19,7 @@ You are saving a lot of time by using a github automation tool. You are skipping
 ## Dependencies
 
 * Python3
-* Vscodium or Vscode
-
-Consider to install [Vscodium](https://vscodium.com/) instead of Vscode, since Vscodium is the open-source binary of Vscode.
+* Git
 
 Also you need a **github access token**. You can find it by **Going to your Settings > Developer settings > Personal access tokens > Generate access tokens**.
 
@@ -81,6 +79,6 @@ That's all.
 * Implement License choose, since the default license is always the MIT license
 * Find a more secure way to use the token
 * Make it usable in Windows.
-* Implement a text editor choice in installation process.
+* Implement a text editor choice in installation process. (Done)
 
 
