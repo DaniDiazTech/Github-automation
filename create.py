@@ -235,7 +235,11 @@ if __name__ == "__main__":
 
     pd = os.getcwd() + "/" + user_repository
 
+<<<<<<< HEAD
     if shutil.which("git") is None:
+=======
+    if shutil.which("git") is not None:
+>>>>>>> 0e32b00f493a17800368f6ccfea67e30c02b8c5a
         print(f"Starting repository in  >>> {pd}")
 
         main(user_name, user_username, user_repository, user_editor, user_token)
