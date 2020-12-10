@@ -1,4 +1,4 @@
-#  Github automation ☕
+# Github automation ☕
 
 This is a program that help you to automate the boring process of creating a project on github.😪 
 
@@ -57,7 +57,7 @@ cat >> githubapi.txt <<EOF
 "YOUR TOKEN IN THE FIRST LINE"
 EOF
 ```
-Warning: I know that having your token in a plain text file, would be risky. So I will try to do something in this aspect.
+🔴 WARNING❗🔴: I know that having your token in a plain text file, would be risky. So I will try to do something in this aspect.
 
 Now type create in your terminal.
 
@@ -69,7 +69,7 @@ This will call the **[create.py](https://github.com/Daniel1404/Github-automation
 
 You will see a prompt where you have to type your name (To include it in the MIT License), your github username and the name of the repo you want to create.
 
-## Screenshot
+## Screenshot 💻
 ![Creating a repo](.screenshots/create.png "Creating a repo")
 
 That's all.
