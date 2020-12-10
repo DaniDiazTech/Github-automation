@@ -1,6 +1,6 @@
-# Github automation
+#  Github automation ☕
 
-This is a program that help you to automate the boring process of creating a project on github.
+This is a program that help you to automate the boring process of creating a project on github.😪 
 
 ## Steps you are avoiding:
 
@@ -11,7 +11,7 @@ You are saving a lot of time by using a github automation tool. You are skipping
 3. Doing the boring stuff with git:
     
     * Git init
-    * Git add .
+    * Git add . 
     * Git commit -m
     * Git add remote
 
@@ -45,7 +45,7 @@ Now the program should be copied in .local/share/Github-automation, so you could
 
 ## Usage 
 
-By default you just need to create a folder named **/Auth** in your home directory, and paste your github token in the first line of a new file named **githubapi.txt**.
+By default you just need to create a folder named **/Auth** in your home directory, and paste your github token in the first line of a new file named **githubapi.txt**.📁
 
 You can do it with the following commands:
 
