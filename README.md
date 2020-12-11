@@ -43,7 +43,7 @@ cd Github-automation
 ```
 Now the program should be copied in .local/share/Github-automation, so you could erase the current directory.
 
-## Usage 
+## Set up 
 
 By default you just need to create a folder named **/Auth** in your home directory, and paste your github token in the first line of a new file named **githubapi.txt**.📁
 
@@ -57,9 +57,16 @@ cat >> githubapi.txt <<EOF
 "YOUR TOKEN IN THE FIRST LINE"
 EOF
 ```
+
+You could also insert your token, directly in the source code. But remember to run **./install.sh**
+again.
+
 🔴 WARNING❗🔴: I know that having your token in a plain text file, would be risky. So I will try to do something in this aspect.
 
-Now type create in your terminal.
+## Usage
+
+
+Now that setup is done, type create in your terminal.
 
 ```
 create
@@ -67,17 +74,45 @@ create
 
 This will call the **[create.py](https://github.com/Daniel1404/Github-automation/blob/main/create.py)** file.
 
-You will see a prompt where you have to type your name (To include it in the MIT License), your github username and the name of the repo you want to create.
+This will ask you for your Github username and the name of the repo you want to create.
+
+Also you will be asked for choose a License, by default is included the 
+[Gnu license](https://choosealicense.com/licenses/gpl-3.0/), the [Mozilla license](https://www.mozilla.org/en-US/MPL/2.0/), the  [MIT
+license](https://choosealicense.com/licenses/mit/) and the [Apache license](https://choosealicense.com/licenses/apache-2.0/).
+
+If there are not problems, you should have a remote repository created, anda folder in the current
+directory with the README, a License file and a .gitignore (By default Python).
+
+## Command line options
+
+* Remote type:
+    By default the remote type of the project is **ssh**, but you can change it to https with the command line argument **https**.
+    ~~~
+    create https
+    ~~~
+* Code editor: The script open the created project with your default editor, but you can change it
+    with a command line argument.
+    ~~~
+    create codium
+    ~~~
+    For example here a I will create a project and open it with Vscodium.
+
+Of course you could use both arguments, it would be something like this.
+~~~
+create https pycharm
+~~~
+This will create a project and open it in Pycharm editor.
 
 ## Screenshot 💻
 ![Creating a repo](.screenshots/create.png "Creating a repo")
+![Creating a repo](.screenshots/create-2.png "Creating a repo")
 
 That's all.
 
 ## TO-DO's
 
-* Implement License choose, since the default license is always the MIT license
-* Find a more secure way to use the token
-* Make it usable in Windows.
-* Implement a text editor choice in installation process. (Done)
+* ✅Implement License choose, since the default license is always the MIT license
+* ⏳Find a more secure way to use the token
+* ⏳Make it usable in Windows.
+* ✅Implement a text editor choice in installation process. (Done)
 

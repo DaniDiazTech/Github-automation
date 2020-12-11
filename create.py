@@ -197,8 +197,10 @@ def authentication(path_to_api):
         print("The File was not found, set a valid path!")
         sys.exit()
 
-# If you prefer uncomment the function below and replace "Your token here"
-# For your token
+# If you prefer, to put your token in the code, uncomment the function below
+# and comment the  function above
+# replace  "Your token here", For your token
+
 # def authentication(path_to_api):
 #     return "Your Token here"
 
