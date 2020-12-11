@@ -1,18 +1,34 @@
 #!/usr/bin/python3
+"""
+Script that automate the boring process of creating a repo on github.
+Created by Daniel Diaz.
+"""
 
 import os
 import shutil
 import sys
-import requests
 import json
 import time
+import requests
 
 
 class OsOperations:
-    def __init__(self, name, user, repository_name):
-        self.name = name
+    """
+    Class that makes all Os level operations
+    """
+
+    def __init__(self, user, repository_name):
         self.user = user
         self.repo_name = repository_name
+
+    @staticmethod
+    def list_dir():
+        """ Function that returns the files in the current directory """
+        current_dir = os.listdir(os.getcwd())
+        print("Created files :", end=" ")
+        for i in current_dir:
+            print(i, end=", ")
+        print("")
 
     def make_directory(self):
         """
@@ -35,49 +51,81 @@ class OsOperations:
         else:
             remote = f"git remote add origin https://github.com/{self.user}/{self.repo_name}.git"
 
+        # Initialize repository
         os.system("git init .")
+        # Add the files previously created
         os.system("git add .")
+        # Commit the changes and set a branch "main"
         os.system("git commit -m 'Initial commit'")
         os.system("git branch -M main")
+        # Add a  remote  origin with the repo and username
         os.system(remote)
+        # Push the changes to github
         os.system("git push -u origin main")
 
-    def create_files(self):
-        mit_license = """
-                   MIT License
+    def get_license_from_templates(self):
+        """TODO: Docstring for get_license.
 
-            Copyright (c) [year] [fullname]
-
-            Permission is hereby granted, free of charge, to any person obtaining a copy
-            of this software and associated documentation files (the "Software"), to deal
-            in the Software without restriction, including without limitation the rights
-            to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-            copies of the Software, and to permit persons to whom the Software is
-            furnished to do so, subject to the following conditions:
-
-            The above copyright notice and this permission notice shall be included in all
-            copies or substantial portions of the Software.
-
-            THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-            IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-            FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-            AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-            LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-            OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-            SOFTWARE.
+        :returns: License as a str
         """
-        mit_license = mit_license.replace("[year]", get_year())
-        mit_license = mit_license.replace("[fullname]", self.name)
+        # Calls license type, that prompts the user to input License and name
+        license_template, name = get_license_type()
+        final_license = ""
+        # If name resulting of calling license type function is none, it is replaced for the
+        # username
+        if name is None:
+            name = self.user
+        # The path where Licenses should be allocated
+        license_path = "/.local/share/Github_automation/Templates/LICENSES/"
+
+        # Manage the exception of missing files
+        # It asks to install the program if the License files are not founded
+        try:
+            if license_template == "mit":
+                with open(f"{home}{license_path}MIT-license", "r") as license_file:
+                    # Reads and replace the name and year brackets founded in
+                    # Licenses directory
+
+                    final_license = license_file.read()
+                    final_license = final_license.replace(
+                        "[year]", get_year()).replace(
+                        "[fullname]", name)
+            elif license_template == "apache":
+                with open(f"{home}{license_path}APACHE-license", "r") as license_file:
+                    final_license = license_file.read()
+                    final_license = final_license.replace(
+                        "[year]", get_year()).replace(
+                        "[fullname]", name)
+
+            elif license_template == "mozilla":
+                with open(f"{home}{license_path}MOZILLA-license", "r") as license_file:
+                    final_license = license_file.read()
+
+            else:
+                with open(f"{home}{license_path}GNU-license", "r") as license_file:
+                    final_license = license_file.read()
+        except FileNotFoundError:
+            print("The program is not installed, make sure you run:")
+            print("./install.sh")
+            sys.exit()
+
+        return final_license
+
+    def create_files(self):
+        license = self.get_license_from_templates()
 
         with open("README.md", "w+") as readme:
             readme.write(f"# {self.repo_name}")
 
         with open("LICENSE", "w+") as my_license:
-            my_license.write(mit_license)
+            my_license.write(license)
 
         # Requires the program to be installed
-        ignore_file = f"cp {home}/.local/share/Github_automation/Templates/python.gitignore ./.gitignore"
-        os.system(ignore_file)
+        ignore_path = f"{home}/.local/share/Github_automation/Templates/python.gitignore"
+        ignore_command = f"cp {ignore_path} ./.gitignore"
+        os.system(ignore_command)
+        print("")
+        self.list_dir()
 
 
 class GetArguments:
@@ -149,7 +197,13 @@ def authentication(path_to_api):
         print("The File was not found, set a valid path!")
         sys.exit()
 
+# If you prefer uncomment the function below and replace "Your token here"
+# For your token
+# def authentication(path_to_api):
+#     return "Your Token here"
 
+
+# Function that returns the current year
 def get_year():
     """
 
@@ -158,6 +212,8 @@ def get_year():
     year = time.localtime()
 
     return str(year.tm_year)
+
+# Function that create the remote repository
 
 
 def create_repo(username, token, repository_name):
@@ -184,7 +240,68 @@ def launch_editor(editor):
     return os.system(f"{editor} .")
 
 
-def main(name, user, repository, editor, token):
+def get_license_type():
+    """
+    return: The license type and the name of the user if the license need it.
+    """
+    print("""
+    [0] GNU license
+    [1] MIT license
+    [2] Apache license
+    [3] Mozilla license
+    """)
+
+    list_licenses = ["gnu", "mit", "apache", "mozilla"]
+    license_type = input("License type >>> [0, 1, 2, 3]")
+    name = None
+    if license_type == "1":
+        name = input("Your name for the MIT license >>> ")
+
+    elif license_type == "2":
+        name = input("Your name for the Apache license >>> ")
+    # Catch an exception if the input license isn't a number
+    try:
+        index = int(license_type)
+    except ValueError:
+        print("License must be a number")
+        get_license_type()
+
+    # Catch an exception if the input is out of index
+    if name == "" or name == " ":
+        name = None
+
+    try:
+        return list_licenses[index], name
+    except IndexError:
+        print("Incorrect number of license")
+        get_license_type()
+
+
+def program_input():
+    """TODO: Docstring for program_input.
+
+    :returns: The different arguments needed to perform the program
+
+    """
+    print("---------------------------------")
+    print("------- GITHUB AUTOMATION -------")
+    print("---------------------------------")
+    print("")
+
+    username = input("Your github username >>> ")
+
+    print("")
+    print("Make sure that the project name is valid!")
+    print("")
+    repository = input(
+        "The name of your repository >>> ").replace(" ", "-")
+
+    print("")
+
+    return username, repository
+
+
+def main(user, repository, editor, token):
     """
 
     :param name: Name of the user
@@ -192,9 +309,9 @@ def main(name, user, repository, editor, token):
     :param repository: Name of the repository that wants to be created
     :param editor: Prefered editor
     :param token: The github auth token
-    :return:
+    :return: The repo creation, creation of files and opening of selected editor
     """
-    project = OsOperations(name, user, repository)
+    project = OsOperations(user, repository)
     create_repo(user, token, repository)
     project.make_directory()
     project.create_files()
@@ -207,30 +324,7 @@ home = os.path.expanduser("~")
 
 if __name__ == "__main__":
     user_editor = GetArguments.get_editor()
-    print("------- GITHUB AUTOMATION -------")
-    print("")
-    print("Your name is required to write the License File")
-
-    user_name = input("Your name >>> ")
-
-    user_username = input("Your github username >>> ")
-
-    print("")
-    print("Make sure that the project name is valid!")
-
-    user_repository = input(
-        "The name of your repository >>> ").replace(" ", "-")
-
-    # print("""
-    # [0] GNU license
-    # [1] MIT license
-    # [2] Apache license
-    # """)
-
-    # license_type = input("License type >>> [0, 2, 3]")
-    print("")
-
-    # Defines the Github token
+    user_username, user_repository, = program_input()
 
     user_token = authentication(f"{home}/Auth/githubapi.txt")
 
@@ -238,13 +332,12 @@ if __name__ == "__main__":
 
     if shutil.which("git") is not None:
         print(f"Starting repository in  >>> {pd}")
-
+        # Calls the main function if git is installed
         main(
-            user_name,
             user_username,
             user_repository,
             user_editor,
-            user_token)
+            user_token,)
     else:
         print(
             "You don't have git installed in your system, install it to create the project")
