@@ -43,7 +43,7 @@ class OsOperations:
         os.system("git push -u origin main")
 
     def create_files(self):
-        mit_license = """        
+        mit_license = """
                    MIT License
 
             Copyright (c) [year] [fullname]
@@ -76,8 +76,8 @@ class OsOperations:
             my_license.write(mit_license)
 
         # Requires the program to be installed
-        path_to_ignore = f"cp {home}/.local/share/Github_automation/Templates/python.gitignore ./.gitignore"
-        os.system(path_to_ignore)
+        ignore_file = f"cp {home}/.local/share/Github_automation/Templates/python.gitignore ./.gitignore"
+        os.system(ignore_file)
 
 
 class GetArguments:
@@ -218,7 +218,8 @@ if __name__ == "__main__":
     print("")
     print("Make sure that the project name is valid!")
 
-    user_repository = input("The name of your repository >>> ").replace(" ", "-")
+    user_repository = input(
+        "The name of your repository >>> ").replace(" ", "-")
 
     # print("""
     # [0] GNU license
@@ -235,14 +236,16 @@ if __name__ == "__main__":
 
     pd = os.getcwd() + "/" + user_repository
 
-<<<<<<< HEAD
-    if shutil.which("git") is None:
-=======
     if shutil.which("git") is not None:
->>>>>>> 0e32b00f493a17800368f6ccfea67e30c02b8c5a
         print(f"Starting repository in  >>> {pd}")
 
-        main(user_name, user_username, user_repository, user_editor, user_token)
+        main(
+            user_name,
+            user_username,
+            user_repository,
+            user_editor,
+            user_token)
     else:
-        print("You don't have git installed in your system, install it to create the project")
+        print(
+            "You don't have git installed in your system, install it to create the project")
         sys.exit()
