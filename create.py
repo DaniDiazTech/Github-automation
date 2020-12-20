@@ -101,9 +101,11 @@ class OsOperations:
                 with open(f"{home}{license_path}MOZILLA-license", "r") as license_file:
                     final_license = license_file.read()
 
-            else:
+            elif license_template == "gnu":
                 with open(f"{home}{license_path}GNU-license", "r") as license_file:
                     final_license = license_file.read()
+            else:
+                final_license = False
         except FileNotFoundError:
             print("The program is not installed, make sure you run:")
             print("./install.sh")
@@ -113,12 +115,15 @@ class OsOperations:
 
     def create_files(self):
         license = self.get_license_from_templates()
+        if not license:
+            pass
+        else:
+            with open("LICENSE", "w+") as my_license:
+                my_license.write(license)
 
         with open("README.md", "w+") as readme:
             readme.write(f"# {self.repo_name}")
 
-        with open("LICENSE", "w+") as my_license:
-            my_license.write(license)
 
         # Requires the program to be installed
         ignore_path = f"{home}/.local/share/Github_automation/Templates/python.gitignore"
@@ -217,21 +222,32 @@ def get_year():
 
 # Function that create the remote repository
 
+# If the private option  is true, the repo is created as private
 
-def create_repo(username, token, repository_name):
+
+def create_repo(username, token, repository_name, private=False):
     """
     Create the repository
     :return: Create the repository
     """
-    payload = {'name': repository_name}
+    # Check if the repo for create is private
+    if private:
+        payload = {'name': repository_name, "private": private}
+    else:
+        payload = {'name': repository_name}
+    
+    # Post to the api the json "payload" and the authentication
+    # credentials
+    
     login = requests.post('https://api.github.com/' + 'user/repos',
                           auth=(username, token), data=json.dumps(payload))
+    
     print("Response from the server : " + str(login.status_code))
     print(" ")
+   
     # Check if the repo has been created
     if str(login.status_code).startswith("2"):
         print("------ Repository Created -------")
-        print("")
         print("")
     else:
         print("------ Error creating the Repository -------")
@@ -251,10 +267,11 @@ def get_license_type():
     [1] MIT license
     [2] Apache license
     [3] Mozilla license
+    [4] No license
     """)
 
-    list_licenses = ["gnu", "mit", "apache", "mozilla"]
-    license_type = input("License type >>> [0, 1, 2, 3]")
+    list_licenses = ["gnu", "mit", "apache", "mozilla", "no"]
+    license_type = input("License type >>> [0, 1, 2, 3, 4]")
     name = None
     if license_type == "1":
         name = input("Your name for the MIT license >>> ")
@@ -299,11 +316,19 @@ def program_input():
         "The name of your repository >>> ").replace(" ", "-")
 
     print("")
+    private = input("The repo is private ? [(y)es, (n)o] >>> ")
+    if private == "y" or private == "yes":
+        print("")
+        print("Private repository created  >>> ")
+        print("")
+        private_repo = True
+    else:
+        private_repo = False
 
-    return username, repository
+    return username, repository, private_repo
 
 
-def main(user, repository, editor, token):
+def main(user, repository, editor, token, private):
     """
 
     :param name: Name of the user
@@ -314,7 +339,7 @@ def main(user, repository, editor, token):
     :return: The repo creation, creation of files and opening of selected editor
     """
     project = OsOperations(user, repository)
-    create_repo(user, token, repository)
+    create_repo(user, token, repository, private)
     project.make_directory()
     project.create_files()
     project.make_git_operations()
@@ -326,7 +351,7 @@ home = os.path.expanduser("~")
 
 if __name__ == "__main__":
     user_editor = GetArguments.get_editor()
-    user_username, user_repository, = program_input()
+    user_username, user_repository, user_private = program_input()
 
     user_token = authentication(f"{home}/Auth/githubapi.txt")
 
@@ -339,7 +364,8 @@ if __name__ == "__main__":
             user_username,
             user_repository,
             user_editor,
-            user_token,)
+            user_token,
+            user_private)
     else:
         print(
             "You don't have git installed in your system, install it to create the project")
