@@ -1,9 +1,10 @@
-# Github automation ☕
+![Cover image](.screenshots/cover.png "Creating a repo")
 
+# Github automation ☕
 
 This is a program that help you to automate the boring process of creating a project on github.😪 
 
-## Steps you are avoiding:
+## Steps you are avoiding :
 
 You are saving a lot of time by using a github automation tool. You are skipping:
 
