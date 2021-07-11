@@ -52,9 +52,13 @@ rm -rf ${executable_folder}create ${executable_folder}create_py
 
 ln -s $PWD/create.py ${executable_folder}create
 
+echo "Installing needed packages"
+
+pip install -r requirements.txt
+
 # shellcheck disable=SC2164
 cd $PD
 
 echo "Installation has finished"
 echo ""
-echo "Now you could remove this folder"
+echo "Now you can remove this folder"

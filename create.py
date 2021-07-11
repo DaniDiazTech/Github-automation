@@ -1,372 +1,547 @@
 #!/usr/bin/python3
 """
-Script that automate the boring process of creating a repo on github.
+Script that automate the boring process of creating a GitHub project.
 Created by Daniel Diaz.
 """
-
 import os
+import argparse
+import subprocess
+import getpass
 import shutil
 import sys
 import json
 import time
+
 import requests
 
+from pathlib import Path
+from dotenv import load_dotenv
 
-class OsOperations:
+load_dotenv()  # take environment variables from .env.
+
+API_URL = "https://api.github.com/"
+GITHUB_AUTOMATION_PATH = Path(str(Path().home()) + "/.local/share/Github_automation/")
+
+
+class GitHubUser:
+    """GitHubUser class.
+
+    Authenticate a GitHub user
+
+    Attributes:
+        class attributes:
+            name: User real name - Used for license choice
+
+        instance attributes:
+            username: GitHub username.
+            token: GitHub token.
+            url:
     """
-    Class that makes all Os level operations
+
+    name = None
+
+    def __init__(self, username: str = None, token: str = None) -> None:
+        """Initialize GitHubUser class."""
+        self.username = self.get_username(username)
+        self.token = self.get_token(token)
+        self.url = API_URL + f'users/{self.username}'
+
+        self.valid_username = self.scrape()
+
+    def scrape(self) -> None:
+        """Scrape the GitHub user and check if exists"""
+
+        response = requests.get(self.url, auth=(self.username, self.token))
+
+        if response:
+            self.name = response.json()['name']
+            self.username = response.json()['login']
+
+            return True
+
+        return False
+
+    def get_token(self, token):
+        """Get the GitHub token."""
+        if not token:
+            return getpass.getpass(prompt='GitHub Token (Or password): ')
+
+        return token
+
+    def get_username(self, username):
+        """Get the username."""
+        if not username:
+            return input('Your GitHub username: ')
+
+        return username
+
+    def get_info(self) -> list:
+        """"Get user information."""
+
+        return self.valid_username, self.name, self.token
+
+    def __str__(self) -> str:
+        return f'Username: {self.username}, Valid: {self.valid_username}, URL: {self.url}'
+
+
+class License:
+    """Class that holds all the info related to the License of a repo
+
+    Returns:
+        License Object: License type, name of user in license file.
     """
 
-    def __init__(self, user, repository_name):
-        self.user = user
-        self.repo_name = repository_name
+    licenses = ['gnu', 'mit', 'apache', 'mozilla']
+    licenses_path = GITHUB_AUTOMATION_PATH / 'Templates/LICENSES/'
 
-    @staticmethod
-    def list_dir():
-        """ Function that returns the files in the current directory """
-        current_dir = os.listdir(os.getcwd())
-        print("Created files :", end=" ")
-        for i in current_dir:
-            print(i, end=", ")
-        print("")
+    # Content: stores the content of the license in an str object
+    content = ''
 
-    def make_directory(self):
+    def __init__(self, choose: str, name: str, licenses_folder: Path = None) -> None:
+        """License class constructor
+
+        Args:
+            choose (str): The user license choise, must be inside the self.licenses list
+            name (str): The real name of the GitHub user
+            licenses_folder (Path, optional): Custom license folder. Defaults to None.
+
+        Raises:
+            OSError: In case the path to the license folder doesn't exist
+
         """
+        self.choose = choose
+        self.name = name
+        self.license_folder = self.get_license_folder(licenses_folder)
 
-        :return: Create the project directories
-        """
-        os.mkdir(self.repo_name)
-        os.chdir(self.repo_name)
+    def check_choose_is_in_licenses(self) -> bool:
+        return self.choose in self.licenses
 
-    def make_git_operations(self):
-        """
-        :return: Make the Git operations, The default remote type is ssh but it can be changed
-        if the user type http in command line
-        """
-        remote_type = GetArguments.get_remote_type()
-
-        # Set the type of remote
-        if remote_type == "ssh":
-            remote = f"git remote add origin git@github.com:{self.user}/{self.repo_name}.git"
+    def check_path_exists(self, path: Path) -> Path:
+        if path.exists():
+            return path
         else:
-            remote = f"git remote add origin https://github.com/{self.user}/{self.repo_name}.git"
+            print('File could not be found')
+            print('May GitHub automation is not installed, make sure you ran:')
+            print('./install.sh')
+            raise OSError()
 
-        # Initialize repository
-        os.system("git init .")
-        # Add the files previously created
-        os.system("git add .")
-        # Commit the changes and set a branch "main"
-        os.system("git commit -m 'Initial commit'")
-        os.system("git branch -M main")
-        # Add a  remote  origin with the repo and username
-        os.system(remote)
-        # Push the changes to github
-        os.system("git push -u origin main")
+    # Function that returns the current year
 
-    def get_license_from_templates(self):
-        """TODO: Docstring for get_license.
-
-        :returns: License as a str
+    def get_year(self):
         """
-        # Calls license type, that prompts the user to input License and name
-        license_template, name = get_license_type()
-        final_license = ""
-        # If name resulting of calling license type function is none, it is replaced for the
-        # username
-        if name is None:
-            name = self.user
-        # The path where Licenses should be allocated
-        license_path = "/.local/share/Github_automation/Templates/LICENSES/"
 
-        # Manage the exception of missing files
-        # It asks to install the program if the License files are not founded
-        try:
-            if license_template == "mit":
-                with open(f"{home}{license_path}MIT-license", "r") as license_file:
-                    # Reads and replace the name and year brackets founded in
-                    # Licenses directory
+        :return: Function that return the current year
+        """
+        year = time.localtime()
 
-                    final_license = license_file.read()
-                    final_license = final_license.replace(
-                        "[year]", get_year()).replace(
-                        "[fullname]", name)
-            elif license_template == "apache":
-                with open(f"{home}{license_path}APACHE-license", "r") as license_file:
-                    final_license = license_file.read()
-                    final_license = final_license.replace(
-                        "[year]", get_year()).replace(
-                        "[fullname]", name)
+        return str(year.tm_year)
 
-            elif license_template == "mozilla":
-                with open(f"{home}{license_path}MOZILLA-license", "r") as license_file:
-                    final_license = license_file.read()
+    def get_license_folder(self, path: Path) -> Path:
+        """Gets the path of the license folder and assert it exists"""
+        if path and path.exists():
+            return path
 
-            elif license_template == "gnu":
-                with open(f"{home}{license_path}GNU-license", "r") as license_file:
-                    final_license = license_file.read()
-            else:
-                final_license = False
-        except FileNotFoundError:
-            print("The program is not installed, make sure you run:")
-            print("./install.sh")
-            sys.exit()
+        path_ = self.licenses_path
 
-        return final_license
+        path_ = self.check_path_exists(path_)
+
+        return path_
+
+    def get_licenses_file_names(self) -> dict:
+
+        d = {}
+
+        for license in self.licenses:
+            d[license] = self.license_folder / (license.upper() + '-license')
+
+        return d
+
+    def content(self):
+        """Returns the content of the license
+
+        Raises:
+            OSError: If the choice is not valid
+        """
+
+        if not self.check_choose_is_in_licenses():
+            print('Choose a valid license name')
+            raise OSError
+
+        path = self.get_licenses_file_names().get(self.choose)
+
+        path = self.check_path_exists(path)
+
+        with open(path) as license:
+
+            license = license.read()
+            license = license.replace(
+                "[year]", self.get_year()).replace(
+                "[fullname]", self.name)
+
+        self.content = license
+
+        return self.content
+
+
+class Repo:
+    """
+    Class of a github repository.
+    Creates and manages a repository on github.
+    """
+    repo_url = None
+
+    def __init__(self, name: str, user: GitHubUser, description: str = None, license_choice: str = None, private: bool = False, ssh: bool = True) -> None:
+        """
+        Initialize a repository.
+        :param name: Name of the repository.
+        :param safe_name: Safe name of the repository. Can be used to create folders.
+        :param description: Description of the repository.
+        :param path: Path of the repository.
+        :param license: License object to write from
+        """
+        self.name = name
+        self.safe_name = self.name.replace(" ", "-")
+        self.description = description
+        self.user = user
+        self.license_choice = license_choice
+
+        self.private = private
+        self.ssh = ssh
+
+    def set_repo_url(self):
+
+        end_of_url = f'{self.user.username}/{self.safe_name}.git'
+
+        if not self.ssh:
+            self.repo_url = 'https://github.com/' + end_of_url
+        else:
+            self.repo_url = f'git@github.com:{end_of_url}'
+
+        return self.repo_url
+
+    def create_repo_folder(self):
+        """Create the repository folder"""
+
+        # Checks if folder exists manually
+        if Path(self.safe_name).exists():
+            print(f'Folder {self.safe_name} already exists')
+            print('Make sure to delete it before creating a new one')
+            raise FileExistsError
+
+        os.mkdir(self.safe_name)
+
+    def enter_repo_folder(self):
+        """Enter the repository folder"""
+        os.chdir(self.safe_name)
+
+    def create_license(self):
+        """Create the license file"""
+        if not self.license_choice:
+            # Function stops here
+            return None
+
+        lc = License(self.license_choice, self.user.name)
+        lc = lc.content()
+
+        # Must be on the current directory
+        with open("LICENSE", "w+") as file_:
+            file_.write(lc)
+
+    def create_readme(self):
+        """Create the readme file"""
+
+        readme = f'# {self.name}'
+
+        if self.description:
+            readme += f'\n\n{self.description}'
+
+        with open("README.md", "w+") as file_:
+            file_.write(readme)
+
+    def create_ignore_file(self):
+        """Create the .gitignore file"""
+
+        ignore_path = GITHUB_AUTOMATION_PATH / "Templates/python.gitignore"
+
+        # Copies the file from the template to the current directory
+        ignore_command = f"cp {ignore_path} ./.gitignore"
+
+        # Runs the command
+        subprocess.run(ignore_command, shell=True)
 
     def create_files(self):
-        license = self.get_license_from_templates()
-        if not license:
-            pass
+        """Create the files of the repository, before creating the remote"""
+
+        # Creates repository folder
+        self.create_repo_folder()
+
+        # Enter the folder
+        self.enter_repo_folder()
+
+        # Create license file
+        self.create_license()
+
+        # Create README file
+        self.create_readme()
+
+        # Create .gitignore file
+        self.create_ignore_file()
+
+    def check_software_installed(self, program: str) -> bool:
+        """Check if user has a program installed"""
+
+        if not shutil.which(program):
+            print(f'{program} is not installed')
+            print(
+                f'Make sure to install {program} before running the script again')
+            raise OSError
+
+    def check_user_has_git_installed(self):
+        """Check if the user has git installed"""
+        self.check_software_installed("git")
+
+    def create_remote_repo(self):
+        """Create the remote repository"""
+
+        payload = {}
+
+        payload['name'] = self.name
+
+        if self.description:
+            payload['description'] = self.description
+
+        if self.private:
+            payload['private'] = self.private
+
+        # Post to the api the json "payload" and the authentication
+        # credentials
+
+        response = requests.post(
+            API_URL + 'user/repos', auth=(self.user.username, self.user.token), data=json.dumps(payload))
+
+        print(f'Response from the server : {str(response.status_code)} \n')
+
+        # Check if the repo has been created
+        if response:
+            print('------ Repository Created -------\n')
         else:
-            with open("LICENSE", "w+") as my_license:
-                my_license.write(license)
+            print("------ Error creating the Repository -------\n")
 
-        with open("README.md", "w+") as readme:
-            readme.write(f"# {self.repo_name}")
+            raise OSError
 
+    def create_local_repo(self):
+        """Create the local git repository"""
 
-        # Requires the program to be installed
-        ignore_path = f"{home}/.local/share/Github_automation/Templates/python.gitignore"
-        ignore_command = f"cp {ignore_path} ./.gitignore"
-        os.system(ignore_command)
-        print("")
-        self.list_dir()
+        # Check user has git installed
 
+        # Initialize repository
+        subprocess.run('git init', shell=True)
 
-class GetArguments:
+        # Add all files
+        subprocess.run('git add .', shell=True)
 
-    def __init__(self):
-        pass
+        # Add a remote origin with the repo and username
 
-    @staticmethod
-    def get_remote_type():
-        remote_type = "ssh"
-        try:
-            first = sys.argv[1]
-            if "http" in first or "HTTP" in first:
-                remote_type = "https"
-        except IndexError:
-            pass
+        # Commit the changes and set a branch "main"
+        subprocess.run("git commit -m 'Initial commit'", shell=True)
+        subprocess.run('git branch -M main', shell=True)
 
-        try:
-            second = sys.argv[2]
-            if "http" in second or "HTTP" in second:
-                remote_type = "https"
-        except IndexError:
-            pass
+        origin_url = self.set_repo_url()
 
-        return remote_type
+        # Add the remote origin
+        subprocess.run(f'git remote add origin {origin_url}', shell=True)
 
-    @staticmethod
-    def get_editor():
-        editor = shutil.which(os.environ.get('EDITOR'))
-        try:
-            first = sys.argv[1]
-            if "http" not in first and "HTTP" not in first:
-                argument_editor = shutil.which(first)
-                if argument_editor is not None:
-                    editor = argument_editor
-                else:
-                    print(f"{argument_editor} is not a valid editor")
-                    print(f"Default editor: {editor} will be used")
-        except IndexError:
-            pass
+        subprocess.run('git push -u origin main', shell=True)
 
-        try:
-            second = sys.argv[2]
-            if "http" not in second and "HTTP" not in second:
-                argument_editor = shutil.which(second)
-                if argument_editor is not None:
-                    editor = argument_editor
-                else:
-                    print(f"{argument_editor} is not a valid editor")
-                    print(f"Default editor: {editor} will be used")
-        except IndexError:
-            pass
+    def create_repo(self):
+        """Create the whole repository"""
 
-        return editor
+        self.check_user_has_git_installed()
+
+        self.create_remote_repo()
+
+        self.create_local_repo()
+
+    def create(self):
+        """Runs all the methods"""
+
+        self.create_files()
+
+        self.create_remote_repo()
+
+        self.create_local_repo()
 
 
-# Function that returns the token
-def authentication(path_to_api):
-    try:
-        with open(path_to_api, 'r') as file:
-            # Make sure that your token api is the top of the file
+class Main:
+    """Class that runs the script
 
-            token = file.readlines()
-            real_token = token[0].rstrip("\n")
+    This class interacts with the user and gets input from him/her
 
-        return real_token
-
-    except FileNotFoundError:
-        print("The File was not found, set a valid path!")
-        sys.exit()
-
-# If you prefer, to put your token in the code, uncomment the function below
-# and comment the  function above
-# replace  "Your token here", For your token
-
-# def authentication(path_to_api):
-#     return "Your Token here"
-
-
-# Function that returns the current year
-def get_year():
+    Use argsparse module to:
+        1. Decide if repo use http or ssh
+        2. launch an editor after creating the repo
     """
 
-    :return: Function that return the current year
-    """
-    year = time.localtime()
+    username = None
+    user_token = None
+    license = None
+    repo_name = None
+    repo_description = None
 
-    return str(year.tm_year)
+    use_http = False
+    private_repo = False
+    user_editor = None
 
-# Function that create the remote repository
+    def init_args(self):
+        """
+        Get all the arguments from the command line using argparse
+        and loads them into the class
+        """
 
-# If the private option  is true, the repo is created as private
+        parser = argparse.ArgumentParser(
+            prog="GitHub automation",
+            description="Creates a new github project and its file structure",
+            epilog="Happy coding!"
+        )
 
+        parser.add_argument(
+            "repository_name",
+            help="Name of the repository")
 
-def create_repo(username, token, repository_name, private=False):
-    """
-    Create the repository
-    :return: Create the repository
-    """
-    # Check if the repo for create is private
-    if private:
-        payload = {'name': repository_name, "private": private}
-    else:
-        payload = {'name': repository_name}
-    
-    # Post to the api the json "payload" and the authentication
-    # credentials
-    
-    login = requests.post('https://api.github.com/' + 'user/repos',
-                          auth=(username, token), data=json.dumps(payload))
-    
-    print("Response from the server : " + str(login.status_code))
-    print(" ")
-   
-    # Check if the repo has been created
-    if str(login.status_code).startswith("2"):
-        print("------ Repository Created -------")
-        print("")
-    else:
-        print("------ Error creating the Repository -------")
-        sys.exit()
+        parser.add_argument(
+            "-e",
+            "--editor",
+            help="Editor to open the file",
+            default=self.user_editor)
 
+        parser.add_argument(
+            "-l",
+            "--license",
+            choices=License.licenses,
+            help="License used in the repo",
+        )
 
-def launch_editor(editor):
-    return os.system(f"{editor} .")
+        parser.add_argument(
+            "-ht",
+            "--http",
+            action="store_true",
+            help="The remote repository will be created with HTTP",
+        )
 
+        parser.add_argument(
+            "-p",
+            "--private",
+            action="store_true",
+            help="Set the repository to private"
+        )
 
-def get_license_type():
-    """
-    return: The license type and the name of the user if the license need it.
-    """
-    print("""
-    [0] GNU license
-    [1] MIT license
-    [2] Apache license
-    [3] Mozilla license
-    [4] No license
-    """)
+        args = parser.parse_args()
 
-    list_licenses = ["gnu", "mit", "apache", "mozilla", "no"]
-    license_type = input("License type >>> [0, 1, 2, 3, 4]")
-    name = None
-    if license_type == "1":
-        name = input("Your name for the MIT license >>> ")
+        self.repo_name = args.repository_name
+        
+        if args.license:
+            self.license = args.license
 
-    elif license_type == "2":
-        name = input("Your name for the Apache license >>> ")
-    # Catch an exception if the input license isn't a number
-    try:
-        index = int(license_type)
-    except ValueError:
-        print("License must be a number")
-        get_license_type()
+        if args.editor:
+            self.user_editor = args.editor
 
-    # Catch an exception if the input is out of index
-    if name == "" or name == " ":
-        name = None
+        if args.http:
+            self.use_http = True
 
-    try:
-        return list_licenses[index], name
-    except IndexError:
-        print("Incorrect number of license")
-        get_license_type()
+        if args.private:
+            self.private_repo = True
 
 
-def program_input():
-    """TODO: Docstring for program_input.
+    def get_editor(self):
+        """
+        Gets the editor from the user
 
-    :returns: The different arguments needed to perform the program
+        If not editor provider by the user, it'll use 
+        editor from the system
+        """
 
-    """
-    print("---------------------------------")
-    print("------- GITHUB AUTOMATION -------")
-    print("---------------------------------")
-    print("")
+        if self.user_editor:
+            return self.user_editor
 
-    username = input("Your github username >>> ")
+        return os.environ.get('EDITOR', 'vim')
 
-    print("")
-    print("Make sure that the project name is valid!")
-    print("")
-    repository = input(
-        "The name of your repository >>> ").replace(" ", "-")
+    def launch_editor(self):
+        """Launch the editor"""
 
-    print("")
-    private = input("The repo is private ? [(y)es, (n)o] >>> ")
-    if private == "y" or private == "yes":
-        print("")
-        print("Private repository created  >>> ")
-        print("")
-        private_repo = True
-    else:
-        private_repo = False
+        subprocess.run(self.get_editor() + ' ./', shell=True)
 
-    return username, repository, private_repo
+    def print_program_welcome(self):
+        """
+        Prints the program welcome 
+        """
+        print("""
+        ---------------------------------
+        ------- GITHUB AUTOMATION -------
+        ---------------------------------
+        """)
+
+    def print_license_choice(self):
+        """Prints the license options"""
+        print("""
+        Please, choose a license,
+
+        gnu: GNU license
+        mit: MIT license
+        apache: Apache license
+        mozilla: Mozilla license
+        no: No license
+        """)
+
+    def get_username_and_token(self):
+        """Gets the username and token from environmentable variables"""
+
+        username = os.environ.get('GITHUB_USERNAME')
+        token = os.environ.get('GITHUB_TOKEN')
+
+        return username, token
+
+    def get_description(self):
+        return input('Project description: ')
+
+    def get_license_choice(self):
+        """Returns the user license choice"""
+        if not self.license:
+            self.print_license_choice()
+            choice = input('Choose a license: ')
+            choice = choice.lower()
+
+            if not choice in License.licenses:
+                return None
+            
+            self.license = choice
+
+        return self.license
 
 
-def main(user, repository, editor, token, private):
-    """
+    def run(self):
+        """Runs the script"""
+        self.init_args()
+        self.print_program_welcome()
 
-    :param name: Name of the user
-    :param user: Github username of the user
-    :param repository: Name of the repository that wants to be created
-    :param editor: Prefered editor
-    :param token: The github auth token
-    :return: The repo creation, creation of files and opening of selected editor
-    """
-    project = OsOperations(user, repository)
-    create_repo(user, token, repository, private)
-    project.make_directory()
-    project.create_files()
-    project.make_git_operations()
-    launch_editor(editor)
+        self.username, self.user_token = self.get_username_and_token()
 
+        user = GitHubUser(self.username, self.user_token)
 
-# Variables
-home = os.path.expanduser("~")
+        ssh = not self.use_http
 
-if __name__ == "__main__":
-    user_editor = GetArguments.get_editor()
-    user_username, user_repository, user_private = program_input()
+        repo = Repo(
+            self.repo_name,
+            user,
+            description=self.get_description(),
+            license_choice=self.get_license_choice(),
+            private = self.private_repo,
+            ssh=ssh
+        )
 
-    user_token = authentication(f"{home}/Auth/githubapi.txt")
+        repo.create()
 
-    pd = os.getcwd() + "/" + user_repository
+        self.launch_editor()
 
-    if shutil.which("git") is not None:
-        print(f"Starting repository in  >>> {pd}")
-        # Calls the main function if git is installed
-        main(
-            user_username,
-            user_repository,
-            user_editor,
-            user_token,
-            user_private)
-    else:
-        print(
-            "You don't have git installed in your system, install it to create the project")
-        sys.exit()
+if __name__ == '__main__':
+    main = Main()
+    main.run()
