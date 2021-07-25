@@ -17,7 +17,13 @@ import requests
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()  # take environment variables from .env.
+print('Loading.env file...')
+
+DOTENV_PATH = str(Path().home()) + '/Auth/.env'
+
+print(DOTENV_PATH)
+
+load_dotenv(DOTENV_PATH)  # take environment variables from .env.
 
 API_URL = "https://api.github.com/"
 GITHUB_AUTOMATION_PATH = Path(str(Path().home()) + "/.local/share/Github_automation/")
