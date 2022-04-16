@@ -32,7 +32,7 @@ I selected the repo and Workflow boxes.
 First you need to clone the repository:
 
 ```
-git clone https://github.com/Daniel1404/Github-automation.git
+git clone https://github.com/DaniDiazTech/Github-automation.git
 ```
 Then make the installation process:
 
